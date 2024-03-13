@@ -8,6 +8,7 @@ use Illuminate\Contracts\Redis\Factory;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use M6Web\Component\RedisMock\RedisMock;
 
 /**
@@ -125,7 +126,7 @@ class RedisConnectionMock extends RedisMock implements Connection, Factory
         return true;
     }
 
-    public function xAdd($stream, $id, array $fields)
+    public function xAdd(mixed $stream, array $fields, string $id = '*')
     {
         // Create the stream if it doesn't exist
         if (! isset($this->streams[$stream])) {
@@ -150,7 +151,7 @@ class RedisConnectionMock extends RedisMock implements Connection, Factory
         return $entryId;
     }
 
-    public function xRange($stream, $start, $end, $count = null)
+    public function xRange(string $stream, string $start, string $end, ?int $count = null)
     {
         if (! isset($this->streams[$stream])) {
             return [];
@@ -176,7 +177,7 @@ class RedisConnectionMock extends RedisMock implements Connection, Factory
         return $entries;
     }
 
-    public function xRevRange($stream, $end, $start, $count = null)
+    public function xRevRange(string $stream, string $end, string $start, ?int $count = null)
     {
         if (! isset($this->streams[$stream])) {
             return [];
@@ -203,8 +204,12 @@ class RedisConnectionMock extends RedisMock implements Connection, Factory
         return $entries;
     }
 
-    public function xDel($stream, array $ids)
+    public function xDel(mixed $stream, array $ids)
     {
+        if(count($ids) === 0) {
+            throw new InvalidArgumentException('No IDs provided to delete');
+        }
+
         if (! isset($this->streams[$stream])) {
             return 0;
         }

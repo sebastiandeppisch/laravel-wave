@@ -47,7 +47,8 @@ class BroadcastEventHistoryRedisStream implements BroadcastEventHistory
 
         $eventData = \get_object_vars($event);
         $eventData['data'] = json_encode($eventData['data'], JSON_THROW_ON_ERROR);
-        $id = $this->db->xAdd('broadcasted_events', '*', $eventData);
+
+        $id = $this->db->xAdd('broadcasted_events', $eventData, '*');
 
         $event->id = $id;
 
@@ -61,6 +62,10 @@ class BroadcastEventHistoryRedisStream implements BroadcastEventHistory
 
         // Fetch all events up to the threshold
         $oldEvents = $this->db->xRange('broadcasted_events', '-', $thresholdTimestamp.'-0');
+
+        if(count($oldEvents) === 0) {
+            return;
+        }
 
         $this->db->xDel('broadcasted_events', \array_keys($oldEvents));
     }
